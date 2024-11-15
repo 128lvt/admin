@@ -13,8 +13,6 @@ export default function Page() {
 
   const { data, isLoading, error } = useVariant(Number(id))
 
-  console.log(data?.data)
-
   return (
     <div>
       {isLoading ? (

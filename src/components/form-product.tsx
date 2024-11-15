@@ -80,7 +80,6 @@ export function ProductForm({ onClose = () => {}, product }: IProps) {
         )
       }
       const res = await response.json()
-      console.log(res)
       return res.data.id
     } catch (error) {
       console.error('Lỗi cập nhật sản phẩm:', error)
@@ -120,7 +119,6 @@ export function ProductForm({ onClose = () => {}, product }: IProps) {
 
   const onSubmit = async (values: z.infer<typeof productSchema>) => {
     const productId = await updateProduct(values)
-    console.log(productId)
     if (productId) {
       onClose()
       mutate()

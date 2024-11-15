@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import { AppSidebar } from '@/components/app-sidebar'
 import { Toaster } from '@/components/ui/toaster'
+import { AppSidebar } from '@/components/app-sidebar'
 
 const jetBrainsMono = JetBrains_Mono({
   subsets: ['vietnamese'], // choose subsets according to your need
@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={jetBrainsMono.className}>
         <SidebarProvider>
           <AppSidebar />
-          <main className="w-full">
+          <main className="mx-auto">
             <SidebarTrigger />
             {children}
             <Toaster />

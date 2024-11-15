@@ -53,7 +53,7 @@ export function VariantForm({
 
   // Define the submit handler which will send POST or PUT request based on variantId presence
   async function onSubmit(values: FormValues) {
-    console.log(values)
+    values
     const url =
       variantId != undefined
         ? `${API_URL}/products/variant/${variantId}` // PUT if variantId exists
@@ -71,7 +71,6 @@ export function VariantForm({
     })
 
     const res = await response.json()
-    console.log(res)
 
     if (!response.ok) {
       if (response.status === 403) {

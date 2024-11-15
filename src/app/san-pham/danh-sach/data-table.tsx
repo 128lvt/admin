@@ -1,5 +1,5 @@
-'use client'
-
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   ColumnDef,
   flexRender,
@@ -9,6 +9,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import {
   Table,
@@ -18,12 +19,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import ImageDialog from '@/components/image-dialog'
 import ProductDialog from '@/components/product-dialog'
 import { Product } from 'types/Type'
-import { useRouter } from 'next/navigation'
 
 interface ProductId {
   id: number
@@ -55,92 +54,84 @@ export function DataTable<TData extends ProductId, TValue>({
   })
 
   const handleRowDoubleClick = (row: TData) => {
-    setSelectedRow(row) // Set row được chọn
+    setSelectedRow(row)
   }
 
   const closeDialog = () => {
-    setSelectedRow(null) // Đóng dialog khi cần
+    setSelectedRow(null)
   }
 
   return (
-    <div>
-      <div className="w-full rounded-md border">
+    <div className="rounded-lg bg-white shadow-md">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="bg-gray-100 font-medium text-gray-700"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="cursor-default">
+          <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                   onDoubleClick={() => handleRowDoubleClick(row.original)}
+                  className="cursor-default transition-colors hover:bg-gray-50"
                 >
                   {row.getVisibleCells().map((cell) => {
                     const cellValue = cell.getValue()
                     const columnId = cell.column.id
 
-                    // Kiểm tra nếu columnId là 'images' hoặc 'variants'
                     if (columnId === 'images') {
                       const items = Array.isArray(cellValue) ? cellValue : []
-
                       return (
-                        <TableCell key={cell.id}>
-                          <div className="text-center">
-                            <ImageDialog
-                              images={items}
-                              productId={row.original.id}
-                            />
-                          </div>
+                        <TableCell key={cell.id} className="p-4 text-center">
+                          <ImageDialog
+                            images={items}
+                            productId={row.original.id}
+                          />
+                        </TableCell>
+                      )
+                    } else if (columnId === 'variants') {
+                      const items = Array.isArray(cellValue) ? cellValue : []
+                      const productId = row.original.id
+                      return (
+                        <TableCell key={cell.id} className="p-4 text-center">
+                          <Button
+                            onClick={() => {
+                              router.push(`/san-pham/size-color/${productId}`)
+                            }}
+                            className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+                          >
+                            {items.length}
+                          </Button>
                         </TableCell>
                       )
                     } else {
-                      if (columnId === 'variants') {
-                        const items = Array.isArray(cellValue) ? cellValue : []
-                        const productId = row.original.id
-                        return (
-                          <TableCell key={cell.id}>
-                            <div className="text-center">
-                              <Button
-                                onClick={() => {
-                                  router.push(
-                                    `/san-pham/size-color/${productId}`,
-                                  )
-                                }}
-                              >
-                                {items.length}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        )
-                      }
+                      return (
+                        <TableCell key={cell.id} className="p-4">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      )
                     }
-
-                    // Nếu không phải 'images' hoặc 'variants', hiển thị giá trị bình thường
-                    return (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    )
                   })}
                 </TableRow>
               ))
@@ -157,13 +148,15 @@ export function DataTable<TData extends ProductId, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-end space-x-2 bg-gray-50 px-4 py-3">
         <Button
           variant="outline"
           size="sm"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
+          className="rounded px-3 py-2 text-gray-600 transition-colors hover:bg-gray-200"
         >
+          <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
         <Button
@@ -171,15 +164,17 @@ export function DataTable<TData extends ProductId, TValue>({
           size="sm"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
+          className="rounded px-3 py-2 text-gray-600 transition-colors hover:bg-gray-200"
         >
           Next
+          <ChevronRight className="h-4 w-4" />
         </Button>
-        <ProductDialog
-          product={selectedRow as unknown as Product}
-          isOpen={!!selectedRow}
-          onClose={closeDialog}
-        />
       </div>
+      <ProductDialog
+        product={selectedRow as unknown as Product}
+        isOpen={!!selectedRow}
+        onClose={closeDialog}
+      />
     </div>
   )
 }

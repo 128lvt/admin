@@ -69,8 +69,6 @@ export function ProductForm() {
       body: JSON.stringify(values),
     })
 
-    console.log('Response status:', response.status) // Kiểm tra status code
-
     if (!response.ok) {
       if (response.status === 403) {
         toast({
@@ -87,7 +85,6 @@ export function ProductForm() {
 
   const onSubmit = async (values: z.infer<typeof productSchema>) => {
     const productId = await addProduct(values)
-    console.log(productId)
     if (productId) {
       mutate()
       toast({
