@@ -1,82 +1,153 @@
 'use client'
 
-import { TrendingUp } from 'lucide-react'
-import { Pie, PieChart } from 'recharts'
-
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { AlertCircle, XCircle, ChevronDown } from 'lucide-react'
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
-const chartData = [
-  { browser: 'chrome', visitors: 275, fill: 'var(--color-chrome)' },
-  { browser: 'safari', visitors: 200, fill: 'var(--color-safari)' },
-  { browser: 'firefox', visitors: 187, fill: 'var(--color-firefox)' },
-  { browser: 'edge', visitors: 173, fill: 'var(--color-edge)' },
-  { browser: 'other', visitors: 90, fill: 'var(--color-other)' },
-]
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import Image from 'next/image'
+import { API_URL } from '@/configs/apiConfig'
 
-const chartConfig = {
-  visitors: {
-    label: 'Visitors',
-  },
-  chrome: {
-    label: 'Chrome',
-    color: 'hsl(var(--chart-1))',
-  },
-  safari: {
-    label: 'Safari',
-    color: 'hsl(var(--chart-2))',
-  },
-  firefox: {
-    label: 'Firefox',
-    color: 'hsl(var(--chart-3))',
-  },
-  edge: {
-    label: 'Edge',
-    color: 'hsl(var(--chart-4))',
-  },
-  other: {
-    label: 'Other',
-    color: 'hsl(var(--chart-5))',
-  },
-} satisfies ChartConfig
+interface ProductVariant {
+  id: number
+  size: string
+  color: string
+  stock: number
+  p_id: number
+}
 
-export function OutOfStock() {
+interface Product {
+  id: number
+  name: string
+  price: number
+  stock: number
+  description: string
+  category: {
+    id: number
+    name: string
+  }
+  variants: ProductVariant[]
+  images: {
+    id: number
+    imageUrl: string
+    product_id: number
+  }[]
+}
+
+interface OutOfStock {
+  product: Product
+  productVariant: ProductVariant
+}
+
+export function OutOfStockList({ data }: { data: OutOfStock[] }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredProducts = data?.filter(
+    (item) =>
+      item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.productVariant.size
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      item.productVariant.color
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
+  )
+
   return (
-    <Card className="flex w-[15%] flex-col">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>Pie Chart - Label</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-bold">
+              Sản phẩm sắp hết hàng
+            </CardTitle>
+            <CardDescription className="text-lg">
+              <span className="font-semibold text-primary">
+                {filteredProducts?.length}
+              </span>{' '}
+              sản phẩm cần thêm số lượng
+            </CardDescription>
+          </div>
+          <AlertCircle className="h-10 w-10 text-red-500" />
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px] pb-0 [&_.recharts-pie-label-text]:fill-foreground"
-        >
-          <PieChart>
-            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-            <Pie data={chartData} dataKey="visitors" label nameKey="browser" />
-          </PieChart>
-        </ChartContainer>
+      <CardContent>
+        <div className="mb-4">
+          <Input
+            type="text"
+            placeholder="Search by name, size, or color..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        <AnimatePresence>
+          {filteredProducts
+            ?.slice(0, isExpanded ? undefined : 5)
+            .map((item, index) => (
+              <motion.div
+                key={`${item.product.id}-${item.productVariant.id}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="mb-4 flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative h-12 w-12 rounded-md bg-muted">
+                    {item.product.images[0] && (
+                      <Image
+                        src={`${API_URL}/products/images/${item.product.images[0].imageUrl}`}
+                        alt="Product Image"
+                        className="h-full w-full rounded-md object-cover"
+                        width={100}
+                        height={100}
+                        priority
+                      />
+                    )}
+                    <XCircle className="absolute -right-2 -top-2 h-6 w-6 text-red-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{item.product.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {item.product.category.name} | Size:{' '}
+                      {item.productVariant.size} | Color:{' '}
+                      {item.productVariant.color}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">
+                    {item.product.price.toLocaleString()}đ
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Stock: {item.productVariant.stock}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+        </AnimatePresence>
+        {filteredProducts?.length > 5 && (
+          <Button
+            variant="outline"
+            className="mt-4 w-full"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? 'Show Less' : 'Show More'}
+            <ChevronDown
+              className={`ml-2 h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            />
+          </Button>
+        )}
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter>
     </Card>
   )
 }

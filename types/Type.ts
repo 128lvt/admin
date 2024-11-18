@@ -145,14 +145,15 @@ export interface Order {
   address?: string
   note?: string
   orderDate?: Date
-  status?: string
-  totalMoney?: number
+  status: string
+  totalMoney: number
   shippingMethod?: string
   shippingAddress?: string
   shippingDate?: Date
   trackingNumber?: string
   paymentMethod?: string
   active?: boolean
+  orderDetails: OrderDetail[]
 }
 
 export interface OrderDetail {

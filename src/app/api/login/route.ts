@@ -2,14 +2,14 @@ import { API_URL } from '@/configs/apiConfig'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const { phone_number, password } = await req.json()
+  const { email, password } = await req.json()
 
   const backendResponse = await fetch(`${API_URL}/users/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ phone_number, password }),
+    body: JSON.stringify({ email, password }),
   })
 
   const res = await backendResponse.json()

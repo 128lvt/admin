@@ -19,6 +19,7 @@ export const columns: ColumnDef<Product>[] = [
         </Button>
       )
     },
+    enableColumnFilter: true,
   },
   {
     accessorKey: 'name',
@@ -33,6 +34,7 @@ export const columns: ColumnDef<Product>[] = [
         </Button>
       )
     },
+    enableColumnFilter: true,
   },
   {
     accessorKey: 'stock',

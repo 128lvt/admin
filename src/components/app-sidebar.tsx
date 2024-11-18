@@ -1,3 +1,4 @@
+'use client'
 import {
   Sidebar,
   SidebarContent,
@@ -23,8 +24,33 @@ import {
   Package,
   ShoppingCart,
 } from 'lucide-react'
+import useUser from '@/hooks/use-user'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export function AppSidebar() {
+  const { user, setUser, loadUserFromLocalStorage } = useUser()
+  const router = useRouter()
+  useEffect(() => {
+    loadUserFromLocalStorage()
+  }, [loadUserFromLocalStorage])
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        setUser(null)
+        router.push('/dang-nhap')
+      } else {
+        console.error('Đăng xuất không thành công')
+      }
+    } catch (error) {
+      console.error('Có lỗi xảy ra khi đăng xuất:', error)
+    }
+  }
   return (
     <Sidebar className="h-full bg-gray-900 text-black">
       <SidebarContent className="px-6 py-8">
@@ -58,7 +84,7 @@ export function AppSidebar() {
               </Collapsible>
               <SidebarMenuButton className="text-md font-medium">
                 <LayoutDashboard className="mr-2 h-5 w-5" />
-                <Link href={'/thong-ke'}>Thống kê</Link>
+                <Link href={'/'}>Thống kê</Link>
               </SidebarMenuButton>
               <SidebarMenuButton className="text-md font-medium">
                 <ShoppingCart className="mr-2 h-5 w-5" />
@@ -70,14 +96,20 @@ export function AppSidebar() {
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuButton className="text-md font-medium">
-                <LogIn className="mr-2 h-5 w-5" />
-                Login
-              </SidebarMenuButton>
-              <SidebarMenuButton className="text-md font-medium">
-                <LogOut className="mr-2 h-5 w-5" />
-                Logout
-              </SidebarMenuButton>
+              {user ? (
+                <SidebarMenuButton
+                  className="text-md font-medium"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="mr-2 h-5 w-5" />
+                  Đăng xuất
+                </SidebarMenuButton>
+              ) : (
+                <SidebarMenuButton className="text-md font-medium">
+                  <LogIn className="mr-2 h-5 w-5" />
+                  <Link href={'/dang-nhap'}>Đăng nhập</Link>
+                </SidebarMenuButton>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

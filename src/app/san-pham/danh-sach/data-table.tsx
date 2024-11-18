@@ -1,9 +1,13 @@
+'use client'
+
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ColumnDef,
+  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
@@ -31,14 +35,20 @@ interface ProductId {
 interface DataTableProps<TData extends ProductId, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  isLoading: boolean
 }
 
 export function DataTable<TData extends ProductId, TValue>({
   columns,
   data,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   const [selectedRow, setSelectedRow] = useState<TData | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  )
+  const [globalFilter, setGlobalFilter] = React.useState('')
   const router = useRouter()
 
   const table = useReactTable({
@@ -48,8 +58,13 @@ export function DataTable<TData extends ProductId, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
+      columnFilters,
+      globalFilter,
     },
   })
 
@@ -61,114 +76,139 @@ export function DataTable<TData extends ProductId, TValue>({
     setSelectedRow(null)
   }
 
-  return (
-    <div className="rounded-lg bg-white shadow-md">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="bg-gray-100 font-medium text-gray-700"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  onDoubleClick={() => handleRowDoubleClick(row.original)}
-                  className="cursor-default transition-colors hover:bg-gray-50"
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const cellValue = cell.getValue()
-                    const columnId = cell.column.id
-
-                    if (columnId === 'images') {
-                      const items = Array.isArray(cellValue) ? cellValue : []
-                      return (
-                        <TableCell key={cell.id} className="p-4 text-center">
-                          <ImageDialog
-                            images={items}
-                            productId={row.original.id}
-                          />
-                        </TableCell>
-                      )
-                    } else if (columnId === 'variants') {
-                      const items = Array.isArray(cellValue) ? cellValue : []
-                      const productId = row.original.id
-                      return (
-                        <TableCell key={cell.id} className="p-4 text-center">
-                          <Button
-                            onClick={() => {
-                              router.push(`/san-pham/size-color/${productId}`)
-                            }}
-                            className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
-                          >
-                            {items.length}
-                          </Button>
-                        </TableCell>
-                      )
-                    } else {
-                      return (
-                        <TableCell key={cell.id} className="p-4">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      )
-                    }
-                  })}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-gray-900"></div>
       </div>
-      <div className="flex items-center justify-end space-x-2 bg-gray-50 px-4 py-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-          className="rounded px-3 py-2 text-gray-600 transition-colors hover:bg-gray-200"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-          className="rounded px-3 py-2 text-gray-600 transition-colors hover:bg-gray-200"
-        >
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-white shadow-md">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="bg-gray-100 px-4 py-3 font-medium text-gray-700"
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    onDoubleClick={() => handleRowDoubleClick(row.original)}
+                    className="cursor-default transition-colors hover:bg-gray-50"
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const cellValue = cell.getValue()
+                      const columnId = cell.column.id
+
+                      if (columnId === 'images') {
+                        const items = Array.isArray(cellValue) ? cellValue : []
+                        return (
+                          <TableCell key={cell.id} className="p-4 text-center">
+                            <ImageDialog
+                              images={items}
+                              productId={row.original.id}
+                            />
+                          </TableCell>
+                        )
+                      } else if (columnId === 'variants') {
+                        const items = Array.isArray(cellValue) ? cellValue : []
+                        const productId = row.original.id
+                        return (
+                          <TableCell key={cell.id} className="p-4 text-center">
+                            <Button
+                              onClick={() => {
+                                router.push(`/san-pham/size-color/${productId}`)
+                              }}
+                              className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+                            >
+                              {items.length}
+                            </Button>
+                          </TableCell>
+                        )
+                      } else {
+                        return (
+                          <TableCell key={cell.id} className="p-4">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        )
+                      }
+                    })}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-between space-x-2 bg-gray-50 px-4 py-3">
+          <div className="text-sm text-gray-700">
+            Showing{' '}
+            {table.getState().pagination.pageIndex *
+              table.getState().pagination.pageSize +
+              1}{' '}
+            to{' '}
+            {Math.min(
+              (table.getState().pagination.pageIndex + 1) *
+                table.getState().pagination.pageSize,
+              table.getFilteredRowModel().rows.length,
+            )}{' '}
+            of {table.getFilteredRowModel().rows.length} results
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="rounded px-3 py-2 text-gray-600 transition-colors hover:bg-gray-200"
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="rounded px-3 py-2 text-gray-600 transition-colors hover:bg-gray-200"
+            >
+              Next
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
       <ProductDialog
         product={selectedRow as unknown as Product}

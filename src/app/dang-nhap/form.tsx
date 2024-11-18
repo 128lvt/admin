@@ -1,4 +1,5 @@
 'use client'
+
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -6,28 +7,35 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
-import { loginSchema } from '@/schemas/loginSchema'
 import useUser from '@/hooks/use-user'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { LogIn, KeyRound, Mail } from 'lucide-react'
+import { loginSchema } from '@/schemas/loginSchema'
 
-export default function FormLogin() {
-  const { loadUserFromLocalStorage, setUser } = useUser() // Sử dụng loadUserFromLocalStorage
+export default function EnhancedFormLogin() {
+  const { loadUserFromLocalStorage, setUser } = useUser()
   const { toast } = useToast()
   const router = useRouter()
 
-  // Khởi tạo useForm với schema Zod
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      phone_number: '',
+      email: '',
       password: '',
     },
   })
 
-  // Hàm xử lý gửi biểu mẫu
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
-      // Gửi yêu cầu đăng nhập tới endpoint `/api/login`
-      const response = await fetch(`/api/login`, {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,7 +47,7 @@ export default function FormLogin() {
       if (!response.ok) {
         toast({
           description: `Đăng nhập thất bại: ${data.message}`,
-          variant: 'error',
+          variant: 'destructive',
         })
         return
       }
@@ -51,45 +59,74 @@ export default function FormLogin() {
         description: 'Đăng nhập thành công',
       })
 
-      loadUserFromLocalStorage() // Gọi hàm loadUserFromLocalStorage để cập nhật trạng thái người dùng
+      loadUserFromLocalStorage()
 
-      router.push('/') // Điều hướng về trang chính
+      router.push('/')
     } catch (error) {
       console.error('Lỗi:', error)
       toast({
         description: 'Có lỗi xảy ra khi đăng nhập',
-        variant: 'error',
+        variant: 'destructive',
       })
     }
   }
 
   return (
-    <div className="flex justify-center">
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="w-[50rem] space-y-4"
-      >
-        <div>
-          <label htmlFor="phone_number">Số điện thoại</label>
-          <Input id="phone_number" {...form.register('phone_number')} />
-          {form.formState.errors.phone_number && (
-            <p>{form.formState.errors.phone_number.message}</p>
-          )}
-        </div>
-        <div>
-          <label htmlFor="password">Mật khẩu</label>
-          <Input type="password" id="password" {...form.register('password')} />
-          {form.formState.errors.password && (
-            <p>{form.formState.errors.password.message}</p>
-          )}
-        </div>
-        <div className="flex justify-end space-x-4">
-          <Button className="w-60 items-center bg-green-600">Đăng ký</Button>
-          <Button type="submit" className="w-60 items-center bg-blue-600">
-            Đăng nhập
-          </Button>
-        </div>
-      </form>
-    </div>
+    <Card className="mx-auto mt-16 w-[600px]">
+      <CardHeader>
+        <CardTitle className="text-center text-2xl font-semibold">
+          Đăng nhập
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 transform text-muted-foreground" />
+                      <Input placeholder="Email" {...field} className="pl-10" />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mật khẩu</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 transform text-muted-foreground" />
+                      <Input
+                        type="password"
+                        placeholder="Mật khẩu"
+                        {...field}
+                        className="pl-10"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              className="w-full bg-primary transition-colors hover:bg-primary/90"
+            >
+              <LogIn className="mr-2 h-4 w-4" /> Đăng nhập
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   )
 }

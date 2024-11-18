@@ -25,8 +25,8 @@ export default function ImageDialog({ images, productId }: IProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isOpen, setIsOpen] = useState(false) // Trạng thái mở của dialog
   const token = localStorage.getItem('token')
-  const { mutate } = useProduct()
   const { toast } = useToast()
+  const { reloadProduct } = useProduct()
 
   const id = images?.[0]?.id ?? productId
 
@@ -58,7 +58,7 @@ export default function ImageDialog({ images, productId }: IProps) {
       })
 
       if (response.ok) {
-        mutate()
+        reloadProduct()
         toast({
           title: 'Thành công!',
           description: `Upload ảnh thành công`,
@@ -80,7 +80,7 @@ export default function ImageDialog({ images, productId }: IProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild className="rounded-2xl">
         <Image
           src={`${API_URL}/products/images/${images[0]?.imageUrl}`}
           width={200}
@@ -96,8 +96,8 @@ export default function ImageDialog({ images, productId }: IProps) {
           <div className="w-full">
             <Image
               src={`${API_URL}/products/images/${images[0]?.imageUrl}`}
-              width={500}
-              height={500}
+              width={200}
+              height={200}
               alt="Image"
               className="w-full"
             />
