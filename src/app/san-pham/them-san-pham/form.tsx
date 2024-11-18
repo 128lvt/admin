@@ -32,7 +32,7 @@ import useUser from '@/hooks/use-user'
 export function ProductForm() {
   const { data, isLoading, error } = useCategory()
   const { toast } = useToast()
-  const { mutate } = useProduct()
+  const { reloadProduct } = useProduct()
   const token = useUser((state) => state.getToken())
 
   const form = useForm<z.infer<typeof productSchema>>({
@@ -86,7 +86,7 @@ export function ProductForm() {
   const onSubmit = async (values: z.infer<typeof productSchema>) => {
     const productId = await addProduct(values)
     if (productId) {
-      mutate()
+      reloadProduct()
       toast({
         title: 'Thành công!',
         description: `Sản phẩm đã tạo. ID: ${productId}`,

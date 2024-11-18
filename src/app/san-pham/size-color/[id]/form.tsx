@@ -36,7 +36,7 @@ export function VariantForm({
   variant,
 }: IProps) {
   const token = localStorage.getItem('token')
-  const { mutate } = useVariant(productId)
+  const { reloadProduct } = useVariant(productId)
   const { toast } = useToast()
 
   // Initialize the form with default values, including the variantId if provided
@@ -53,7 +53,6 @@ export function VariantForm({
 
   // Define the submit handler which will send POST or PUT request based on variantId presence
   async function onSubmit(values: FormValues) {
-    values
     const url =
       variantId != undefined
         ? `${API_URL}/products/variant/${variantId}` // PUT if variantId exists
@@ -88,7 +87,7 @@ export function VariantForm({
       }
     } else {
       onClose()
-      mutate()
+      reloadProduct()
       toast({
         title:
           variantId != undefined
@@ -122,7 +121,7 @@ export function VariantForm({
       })
     } else {
       onClose()
-      mutate()
+      reloadProduct()
       toast({
         title: 'Xóa thành công!',
         description: 'Variant đã được xóa.',

@@ -35,7 +35,7 @@ interface IProps {
 
 export function ProductForm({ onClose = () => {}, product }: IProps) {
   const { data, isLoading, error } = useCategory()
-  const { mutate } = useProduct()
+  const { reloadProduct } = useProduct()
   const { toast } = useToast()
   const token = localStorage.getItem('token')
 
@@ -106,7 +106,7 @@ export function ProductForm({ onClose = () => {}, product }: IProps) {
         description: `Sản phẩm đã bị xóa.`,
       })
       onClose()
-      mutate()
+      reloadProduct()
     } catch (error) {
       console.error('Lỗi xóa sản phẩm:', error)
       toast({
@@ -121,7 +121,7 @@ export function ProductForm({ onClose = () => {}, product }: IProps) {
     const productId = await updateProduct(values)
     if (productId) {
       onClose()
-      mutate()
+      reloadProduct()
       toast({
         title: 'Thành công!',
         description: `Cập nhật sản phẩm. ID: ${productId}`,
