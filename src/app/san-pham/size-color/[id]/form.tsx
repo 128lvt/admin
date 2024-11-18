@@ -36,7 +36,7 @@ export function VariantForm({
   variant,
 }: IProps) {
   const token = localStorage.getItem('token')
-  const { reloadProduct } = useVariant(productId)
+  const { mutate } = useVariant(productId)
   const { toast } = useToast()
 
   // Initialize the form with default values, including the variantId if provided
@@ -87,7 +87,7 @@ export function VariantForm({
       }
     } else {
       onClose()
-      reloadProduct()
+      mutate()
       toast({
         title:
           variantId != undefined
@@ -121,7 +121,7 @@ export function VariantForm({
       })
     } else {
       onClose()
-      reloadProduct()
+      mutate()
       toast({
         title: 'Xóa thành công!',
         description: 'Variant đã được xóa.',
