@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { Order } from 'types/Type'
 import {
   Card,
@@ -40,6 +41,14 @@ import { useToast } from '@/hooks/use-toast'
 import { API_URL } from '@/configs/apiConfig'
 import useOrder from '@/hooks/use-order'
 
+const QRCode = dynamic(
+  () => import('qrcode.react').then((mod) => mod.QRCodeSVG),
+  {
+    ssr: false, // Optional: Disable server-side rendering if you need
+    loading: () => <p>Loading QR code...</p>, // Optional: Show loading state while the QR code is loading
+  },
+)
+
 interface OrderItemProps {
   order: Order
 }
@@ -47,6 +56,7 @@ interface OrderItemProps {
 export function OrderItem({ order }: OrderItemProps) {
   const [editMode, setEditMode] = useState(false)
   const [newStatus, setNewStatus] = useState(order.status)
+  const [showQR, setShowQR] = useState(false)
   const token = useUser((state) => state.getToken())
   const { toast } = useToast()
   const { mutate } = useOrder(token ?? '')
@@ -71,6 +81,7 @@ export function OrderItem({ order }: OrderItemProps) {
         return 'bg-gray-500'
     }
   }
+
   const updateStatus = async (orderId: number, newStatus: string) => {
     try {
       const response = await fetch(
@@ -237,6 +248,23 @@ export function OrderItem({ order }: OrderItemProps) {
             </div>
           </ScrollArea>
         </div>
+        <div className="flex justify-center">
+          <Button onClick={() => setShowQR(!showQR)}>
+            {showQR ? 'Ẩn mã QR' : 'Hiển thị mã QR'}
+          </Button>
+        </div>
+
+        {showQR && (
+          <div className="flex flex-col items-center space-y-2">
+            <QRCode
+              value={`${window.location.origin}/scan-qr?orderId=${order.id}`}
+              size={300}
+            />
+            <p className="text-sm text-muted-foreground">
+              Quét mã QR để cập nhật trạng thái đơn hàng
+            </p>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="bg-muted/50">
         <div className="flex w-full items-center justify-between">

@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   if (!backendResponse.ok) {
     return NextResponse.json(
-      { message: res.message || 'Đăng nhập thất bại' },
+      { message: res.data || 'Đăng nhập thất bại' },
       { status: backendResponse.status },
     )
   }
